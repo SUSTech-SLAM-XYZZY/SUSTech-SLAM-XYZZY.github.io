@@ -20,24 +20,24 @@
     var CONFIG = {"hostname":"sustech-slam-xyzzy.github.io","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="已经可以初步识别强-弱-强-弱-强特征可以识别2D 点云用qt可视化:  识别出的结果:  现在存在的问题: 识别精度过低 识别容易受到一些边界点的干扰，如发现从0-&gt;30～40有个中间的过渡点，而我设置了 上升35%则代表另一个stages，这导致识别极度不精确，后续会加上一些限制因素 该程序是根据流来处理，虽然会使得速度较快，但也同时导致了无法识别一些全局上的特征  改进方向 会加上一些">
+  <meta name="description" content="本周是对于之前算法的改进和分析。 上一版本算法缺点分析上一版本代码点这里  回顾：尝试使用贪心算法，通过维持一个list来判断状态。  1234567891011121314151617181920212223242526272829303132333435Point &lt;- {dist, angle, flag, syn_quality}Feature &lt;- {list(points)">
 <meta property="og:type" content="article">
-<meta property="og:title" content="已可以初步识别强-弱-强-弱-强特征">
-<meta property="og:url" content="http://sustech-slam-xyzzy.github.io/2021/11/11/%E5%B7%B2%E5%8F%AF%E4%BB%A5%E5%88%9D%E6%AD%A5%E8%AF%86%E5%88%AB%E5%BC%BA-%E5%BC%B1-%E5%BC%BA-%E5%BC%B1-%E5%BC%BA%E7%89%B9%E5%BE%81/">
+<meta property="og:title" content="数据分析及算法设计（1）">
+<meta property="og:url" content="http://sustech-slam-xyzzy.github.io/2021/11/24/%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90%E5%8F%8A%E7%AE%97%E6%B3%95%E8%AE%BE%E8%AE%A1%EF%BC%881%EF%BC%89/">
 <meta property="og:site_name" content="SUSTech SLAM sweeping robot project">
-<meta property="og:description" content="已经可以初步识别强-弱-强-弱-强特征可以识别2D 点云用qt可视化:  识别出的结果:  现在存在的问题: 识别精度过低 识别容易受到一些边界点的干扰，如发现从0-&gt;30～40有个中间的过渡点，而我设置了 上升35%则代表另一个stages，这导致识别极度不精确，后续会加上一些限制因素 该程序是根据流来处理，虽然会使得速度较快，但也同时导致了无法识别一些全局上的特征  改进方向 会加上一些">
+<meta property="og:description" content="本周是对于之前算法的改进和分析。 上一版本算法缺点分析上一版本代码点这里  回顾：尝试使用贪心算法，通过维持一个list来判断状态。  1234567891011121314151617181920212223242526272829303132333435Point &lt;- {dist, angle, flag, syn_quality}Feature &lt;- {list(points)">
 <meta property="og:locale">
-<meta property="og:image" content="http://sustech-slam-xyzzy.github.io/2021/11/11/%E5%B7%B2%E5%8F%AF%E4%BB%A5%E5%88%9D%E6%AD%A5%E8%AF%86%E5%88%AB%E5%BC%BA-%E5%BC%B1-%E5%BC%BA-%E5%BC%B1-%E5%BC%BA%E7%89%B9%E5%BE%81/sendpix0.jpg">
-<meta property="og:image" content="http://sustech-slam-xyzzy.github.io/2021/11/11/%E5%B7%B2%E5%8F%AF%E4%BB%A5%E5%88%9D%E6%AD%A5%E8%AF%86%E5%88%AB%E5%BC%BA-%E5%BC%B1-%E5%BC%BA-%E5%BC%B1-%E5%BC%BA%E7%89%B9%E5%BE%81/48902A555F5D65F1D06705248995625E.png">
-<meta property="og:image" content="http://sustech-slam-xyzzy.github.io/2021/11/11/%E5%B7%B2%E5%8F%AF%E4%BB%A5%E5%88%9D%E6%AD%A5%E8%AF%86%E5%88%AB%E5%BC%BA-%E5%BC%B1-%E5%BC%BA-%E5%BC%B1-%E5%BC%BA%E7%89%B9%E5%BE%81/sendpix1.jpg">
-<meta property="article:published_time" content="2021-11-11T02:21:12.000Z">
-<meta property="article:modified_time" content="2021-11-18T06:15:00.416Z">
+<meta property="og:image" content="http://sustech-slam-xyzzy.github.io/2021/11/24/%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90%E5%8F%8A%E7%AE%97%E6%B3%95%E8%AE%BE%E8%AE%A1%EF%BC%881%EF%BC%89/50-90.csv_dist_scatter.jpg">
+<meta property="og:image" content="http://sustech-slam-xyzzy.github.io/2021/11/24/%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90%E5%8F%8A%E7%AE%97%E6%B3%95%E8%AE%BE%E8%AE%A1%EF%BC%881%EF%BC%89/60-90-2.csv_strength_bar.jpg">
+<meta property="og:image" content="http://sustech-slam-xyzzy.github.io/2021/11/24/%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90%E5%8F%8A%E7%AE%97%E6%B3%95%E8%AE%BE%E8%AE%A1%EF%BC%881%EF%BC%89/IMG_07B82268B225-1.jpeg">
+<meta property="article:published_time" content="2021-11-24T15:21:19.000Z">
+<meta property="article:modified_time" content="2021-11-24T17:23:03.102Z">
 <meta property="article:author" content="谢岳臻,张子越">
-<meta property="article:tag" content="代码">
+<meta property="article:tag" content="数据分析 算法">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="http://sustech-slam-xyzzy.github.io/2021/11/11/%E5%B7%B2%E5%8F%AF%E4%BB%A5%E5%88%9D%E6%AD%A5%E8%AF%86%E5%88%AB%E5%BC%BA-%E5%BC%B1-%E5%BC%BA-%E5%BC%B1-%E5%BC%BA%E7%89%B9%E5%BE%81/sendpix0.jpg">
+<meta name="twitter:image" content="http://sustech-slam-xyzzy.github.io/2021/11/24/%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90%E5%8F%8A%E7%AE%97%E6%B3%95%E8%AE%BE%E8%AE%A1%EF%BC%881%EF%BC%89/50-90.csv_dist_scatter.jpg">
 
-<link rel="canonical" href="http://sustech-slam-xyzzy.github.io/2021/11/11/%E5%B7%B2%E5%8F%AF%E4%BB%A5%E5%88%9D%E6%AD%A5%E8%AF%86%E5%88%AB%E5%BC%BA-%E5%BC%B1-%E5%BC%BA-%E5%BC%B1-%E5%BC%BA%E7%89%B9%E5%BE%81/">
+<link rel="canonical" href="http://sustech-slam-xyzzy.github.io/2021/11/24/%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90%E5%8F%8A%E7%AE%97%E6%B3%95%E8%AE%BE%E8%AE%A1%EF%BC%881%EF%BC%89/">
 
 
 <script id="page-configurations">
@@ -50,7 +50,7 @@
   };
 </script>
 
-  <title>已可以初步识别强-弱-强-弱-强特征 | SUSTech SLAM sweeping robot project</title>
+  <title>数据分析及算法设计（1） | SUSTech SLAM sweeping robot project</title>
   
 
 
@@ -268,7 +268,7 @@ mjx-container[display="true"] + br {
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
-    <link itemprop="mainEntityOfPage" href="http://sustech-slam-xyzzy.github.io/2021/11/11/%E5%B7%B2%E5%8F%AF%E4%BB%A5%E5%88%9D%E6%AD%A5%E8%AF%86%E5%88%AB%E5%BC%BA-%E5%BC%B1-%E5%BC%BA-%E5%BC%B1-%E5%BC%BA%E7%89%B9%E5%BE%81/">
+    <link itemprop="mainEntityOfPage" href="http://sustech-slam-xyzzy.github.io/2021/11/24/%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90%E5%8F%8A%E7%AE%97%E6%B3%95%E8%AE%BE%E8%AE%A1%EF%BC%881%EF%BC%89/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -281,7 +281,7 @@ mjx-container[display="true"] + br {
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          已可以初步识别强-弱-强-弱-强特征
+          数据分析及算法设计（1）
         </h1>
 
         <div class="post-meta">
@@ -291,14 +291,14 @@ mjx-container[display="true"] + br {
               </span>
               <span class="post-meta-item-text">Posted on</span>
 
-              <time title="Created: 2021-11-11 10:21:12" itemprop="dateCreated datePublished" datetime="2021-11-11T10:21:12+08:00">2021-11-11</time>
+              <time title="Created: 2021-11-24 23:21:19" itemprop="dateCreated datePublished" datetime="2021-11-24T23:21:19+08:00">2021-11-24</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2021-11-18 14:15:00" itemprop="dateModified" datetime="2021-11-18T14:15:00+08:00">2021-11-18</time>
+                <time title="Modified: 2021-11-25 01:23:03" itemprop="dateModified" datetime="2021-11-25T01:23:03+08:00">2021-11-25</time>
               </span>
 
           
@@ -312,21 +312,37 @@ mjx-container[display="true"] + br {
     <div class="post-body" itemprop="articleBody">
 
       
-        <h1 id="已经可以初步识别强-弱-强-弱-强特征"><a href="#已经可以初步识别强-弱-强-弱-强特征" class="headerlink" title="已经可以初步识别强-弱-强-弱-强特征"></a>已经可以初步识别强-弱-强-弱-强特征</h1><h2 id="可以识别"><a href="#可以识别" class="headerlink" title="可以识别"></a>可以识别</h2><p>2D 点云用qt可视化:</p>
-<p><img src="/2021/11/11/%E5%B7%B2%E5%8F%AF%E4%BB%A5%E5%88%9D%E6%AD%A5%E8%AF%86%E5%88%AB%E5%BC%BA-%E5%BC%B1-%E5%BC%BA-%E5%BC%B1-%E5%BC%BA%E7%89%B9%E5%BE%81/sendpix0.jpg" alt></p>
-<p>识别出的结果:</p>
-<p><img src="/2021/11/11/%E5%B7%B2%E5%8F%AF%E4%BB%A5%E5%88%9D%E6%AD%A5%E8%AF%86%E5%88%AB%E5%BC%BA-%E5%BC%B1-%E5%BC%BA-%E5%BC%B1-%E5%BC%BA%E7%89%B9%E5%BE%81/48902A555F5D65F1D06705248995625E.png" alt></p>
-<h2 id="现在存在的问题"><a href="#现在存在的问题" class="headerlink" title="现在存在的问题:"></a>现在存在的问题:</h2><ul>
-<li>识别精度过低</li>
-<li>识别容易受到一些边界点的干扰，如<img src="/2021/11/11/%E5%B7%B2%E5%8F%AF%E4%BB%A5%E5%88%9D%E6%AD%A5%E8%AF%86%E5%88%AB%E5%BC%BA-%E5%BC%B1-%E5%BC%BA-%E5%BC%B1-%E5%BC%BA%E7%89%B9%E5%BE%81/sendpix1.jpg" alt>发现从0-&gt;30～40有个中间的过渡点，而我设置了<mjx-container class="MathJax" jax="SVG"><svg style="vertical-align: -0.186ex" xmlns="http://www.w3.org/2000/svg" width="14.069ex" height="1.756ex" role="img" focusable="false" viewbox="0 -694 6218.4 776"><g stroke="currentColor" fill="currentColor" stroke-width="0" transform="scale(1,-1)"><g data-mml-node="math"><g data-mml-node="mi"><path data-c="1D440" d="M289 629Q289 635 232 637Q208 637 201 638T194 648Q194 649 196 659Q197 662 198 666T199 671T201 676T203 679T207 681T212 683T220 683T232 684Q238 684 262 684T307 683Q386 683 398 683T414 678Q415 674 451 396L487 117L510 154Q534 190 574 254T662 394Q837 673 839 675Q840 676 842 678T846 681L852 683H948Q965 683 988 683T1017 684Q1051 684 1051 673Q1051 668 1048 656T1045 643Q1041 637 1008 637Q968 636 957 634T939 623Q936 618 867 340T797 59Q797 55 798 54T805 50T822 48T855 46H886Q892 37 892 35Q892 19 885 5Q880 0 869 0Q864 0 828 1T736 2Q675 2 644 2T609 1Q592 1 592 11Q592 13 594 25Q598 41 602 43T625 46Q652 46 685 49Q699 52 704 61Q706 65 742 207T813 490T848 631L654 322Q458 10 453 5Q451 4 449 3Q444 0 433 0Q418 0 415 7Q413 11 374 317L335 624L267 354Q200 88 200 79Q206 46 272 46H282Q288 41 289 37T286 19Q282 3 278 1Q274 0 267 0Q265 0 255 0T221 1T157 2Q127 2 95 1T58 0Q43 0 39 2T35 11Q35 13 38 25T43 40Q45 46 65 46Q135 46 154 86Q158 92 223 354T289 629Z"/></g><g data-mml-node="mi" transform="translate(1051,0)"><path data-c="1D452" d="M39 168Q39 225 58 272T107 350T174 402T244 433T307 442H310Q355 442 388 420T421 355Q421 265 310 237Q261 224 176 223Q139 223 138 221Q138 219 132 186T125 128Q125 81 146 54T209 26T302 45T394 111Q403 121 406 121Q410 121 419 112T429 98T420 82T390 55T344 24T281 -1T205 -11Q126 -11 83 42T39 168ZM373 353Q367 405 305 405Q272 405 244 391T199 357T170 316T154 280T149 261Q149 260 169 260Q282 260 327 284T373 353Z"/></g><g data-mml-node="mi" transform="translate(1517,0)"><path data-c="1D44E" d="M33 157Q33 258 109 349T280 441Q331 441 370 392Q386 422 416 422Q429 422 439 414T449 394Q449 381 412 234T374 68Q374 43 381 35T402 26Q411 27 422 35Q443 55 463 131Q469 151 473 152Q475 153 483 153H487Q506 153 506 144Q506 138 501 117T481 63T449 13Q436 0 417 -8Q409 -10 393 -10Q359 -10 336 5T306 36L300 51Q299 52 296 50Q294 48 292 46Q233 -10 172 -10Q117 -10 75 30T33 157ZM351 328Q351 334 346 350T323 385T277 405Q242 405 210 374T160 293Q131 214 119 129Q119 126 119 118T118 106Q118 61 136 44T179 26Q217 26 254 59T298 110Q300 114 325 217T351 328Z"/></g><g data-mml-node="mi" transform="translate(2046,0)"><path data-c="1D45B" d="M21 287Q22 293 24 303T36 341T56 388T89 425T135 442Q171 442 195 424T225 390T231 369Q231 367 232 367L243 378Q304 442 382 442Q436 442 469 415T503 336T465 179T427 52Q427 26 444 26Q450 26 453 27Q482 32 505 65T540 145Q542 153 560 153Q580 153 580 145Q580 144 576 130Q568 101 554 73T508 17T439 -10Q392 -10 371 17T350 73Q350 92 386 193T423 345Q423 404 379 404H374Q288 404 229 303L222 291L189 157Q156 26 151 16Q138 -11 108 -11Q95 -11 87 -5T76 7T74 17Q74 30 112 180T152 343Q153 348 153 366Q153 405 129 405Q91 405 66 305Q60 285 60 284Q58 278 41 278H27Q21 284 21 287Z"/></g><g data-mml-node="mo" transform="translate(2868.2,0)"><path data-c="2212" d="M84 237T84 250T98 270H679Q694 262 694 250T679 230H98Q84 237 84 250Z"/></g><g data-mml-node="mi" transform="translate(3868.4,0)"><path data-c="1D463" d="M173 380Q173 405 154 405Q130 405 104 376T61 287Q60 286 59 284T58 281T56 279T53 278T49 278T41 278H27Q21 284 21 287Q21 294 29 316T53 368T97 419T160 441Q202 441 225 417T249 361Q249 344 246 335Q246 329 231 291T200 202T182 113Q182 86 187 69Q200 26 250 26Q287 26 319 60T369 139T398 222T409 277Q409 300 401 317T383 343T365 361T357 383Q357 405 376 424T417 443Q436 443 451 425T467 367Q467 340 455 284T418 159T347 40T241 -11Q177 -11 139 22Q102 54 102 117Q102 148 110 181T151 298Q173 362 173 380Z"/></g><g data-mml-node="mi" transform="translate(4353.4,0)"><path data-c="1D44E" d="M33 157Q33 258 109 349T280 441Q331 441 370 392Q386 422 416 422Q429 422 439 414T449 394Q449 381 412 234T374 68Q374 43 381 35T402 26Q411 27 422 35Q443 55 463 131Q469 151 473 152Q475 153 483 153H487Q506 153 506 144Q506 138 501 117T481 63T449 13Q436 0 417 -8Q409 -10 393 -10Q359 -10 336 5T306 36L300 51Q299 52 296 50Q294 48 292 46Q233 -10 172 -10Q117 -10 75 30T33 157ZM351 328Q351 334 346 350T323 385T277 405Q242 405 210 374T160 293Q131 214 119 129Q119 126 119 118T118 106Q118 61 136 44T179 26Q217 26 254 59T298 110Q300 114 325 217T351 328Z"/></g><g data-mml-node="mi" transform="translate(4882.4,0)"><path data-c="1D459" d="M117 59Q117 26 142 26Q179 26 205 131Q211 151 215 152Q217 153 225 153H229Q238 153 241 153T246 151T248 144Q247 138 245 128T234 90T214 43T183 6T137 -11Q101 -11 70 11T38 85Q38 97 39 102L104 360Q167 615 167 623Q167 626 166 628T162 632T157 634T149 635T141 636T132 637T122 637Q112 637 109 637T101 638T95 641T94 647Q94 649 96 661Q101 680 107 682T179 688Q194 689 213 690T243 693T254 694Q266 694 266 686Q266 675 193 386T118 83Q118 81 118 75T117 65V59Z"/></g><g data-mml-node="mi" transform="translate(5180.4,0)"><path data-c="1D462" d="M21 287Q21 295 30 318T55 370T99 420T158 442Q204 442 227 417T250 358Q250 340 216 246T182 105Q182 62 196 45T238 27T291 44T328 78L339 95Q341 99 377 247Q407 367 413 387T427 416Q444 431 463 431Q480 431 488 421T496 402L420 84Q419 79 419 68Q419 43 426 35T447 26Q469 29 482 57T512 145Q514 153 532 153Q551 153 551 144Q550 139 549 130T540 98T523 55T498 17T462 -8Q454 -10 438 -10Q372 -10 347 46Q345 45 336 36T318 21T296 6T267 -6T233 -11Q189 -11 155 7Q103 38 103 113Q103 170 138 262T173 379Q173 380 173 381Q173 390 173 393T169 400T158 404H154Q131 404 112 385T82 344T65 302T57 280Q55 278 41 278H27Q21 284 21 287Z"/></g><g data-mml-node="mi" transform="translate(5752.4,0)"><path data-c="1D452" d="M39 168Q39 225 58 272T107 350T174 402T244 433T307 442H310Q355 442 388 420T421 355Q421 265 310 237Q261 224 176 223Q139 223 138 221Q138 219 132 186T125 128Q125 81 146 54T209 26T302 45T394 111Q403 121 406 121Q410 121 419 112T429 98T420 82T390 55T344 24T281 -1T205 -11Q126 -11 83 42T39 168ZM373 353Q367 405 305 405Q272 405 244 391T199 357T170 316T154 280T149 261Q149 260 169 260Q282 260 327 284T373 353Z"/></g></g></g></svg></mjx-container> 上升35%则代表另一个stages，这导致识别极度不精确，后续会加上一些限制因素</li>
-<li>该程序是根据流来处理，虽然会使得速度较快，但也同时导致了无法识别一些全局上的特征</li>
+        <p>本周是对于之前算法的改进和分析。</p>
+<h2 id="上一版本算法缺点分析"><a href="#上一版本算法缺点分析" class="headerlink" title="上一版本算法缺点分析"></a>上一版本算法缺点分析</h2><p><a href="https://sustech-slam-xyzzy.github.io/2021/11/11/已可以初步识别强-弱-强-弱-强特征/">上一版本代码点这里</a></p>
+<blockquote>
+<p>回顾：尝试使用贪心算法，通过维持一个list来判断状态。</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line">Point &lt;- {dist, angle, flag, syn_quality}</span><br><span class="line">Feature &lt;- {list(points), stages, Mean, last}</span><br><span class="line">board_len</span><br><span class="line">function calc():</span><br><span class="line">	if size(list(points)) &gt; 360</span><br><span class="line">		clear(list(points)), stage &lt;- 0, Mean &lt;- 0</span><br><span class="line">		return</span><br><span class="line">	pf, pb &lt;- first_point, last point of list(points)</span><br><span class="line">	if distance(pf, pb) &gt; board_len:</span><br><span class="line">		erase the first point in list(points)</span><br><span class="line">		calc()</span><br><span class="line">		return</span><br><span class="line">	if exists p in list(points) has distance(p, pb) &lt; board_len / 5:</span><br><span class="line">		clear(list(points)), stage &lt;- 0, Mean &lt;- 0</span><br><span class="line">		return</span><br><span class="line">	if stage = 0 or stage = 2:</span><br><span class="line">		if mean(syn_quality) &lt; 0.7 * Mean:</span><br><span class="line">			stage &lt;- stage + 1</span><br><span class="line">		else if mean(syn_quality) &gt; 1.3 * Mean:</span><br><span class="line">			stage &lt;- 0</span><br><span class="line">		Mean &lt;- mean(syn_quality)</span><br><span class="line">		return</span><br><span class="line">	if stage = 1 or stage = 3:</span><br><span class="line">		if mean(syn_quality) &gt; 1.3 * Mean:</span><br><span class="line">			stage &lt;- stage + 1</span><br><span class="line">		else if mean(syn_quality) &lt; 0.7 * Mean:</span><br><span class="line">			stage &lt;- 1</span><br><span class="line">		Mean &lt;- mean(syn_quality)</span><br><span class="line">		return</span><br><span class="line">	if stage = 4:</span><br><span class="line">		if check(Feature) failed:</span><br><span class="line">			return</span><br><span class="line">		return Feature</span><br><span class="line">	else:</span><br><span class="line">		Mean &lt;- mean(Mean, syn_quality)</span><br></pre></td></tr></table></figure>
+<p>问题：</p>
+<ul>
+<li><p>对于离群太远的点，无法判断是否保留。尝试了多个宽容度效果都不太好。</p>
+</li>
+<li><p>抗干扰差，部分边界点距离和强度和平均值相差甚远，这部分点贪心算法不能很好的处理。</p>
+<p>  <img src="/2021/11/24/%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90%E5%8F%8A%E7%AE%97%E6%B3%95%E8%AE%BE%E8%AE%A1%EF%BC%881%EF%BC%89/50-90.csv_dist_scatter.jpg" style="zoom: 50%;"><img src="/2021/11/24/%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90%E5%8F%8A%E7%AE%97%E6%B3%95%E8%AE%BE%E8%AE%A1%EF%BC%881%EF%BC%89/60-90-2.csv_strength_bar.jpg" style="zoom: 50%;"></p>
+</li>
+<li><p>强度的宽容度设置没有能很好的反应数据真实情况。</p>
+</li>
 </ul>
-<h2 id="改进方向"><a href="#改进方向" class="headerlink" title="改进方向"></a>改进方向</h2><ul>
-<li>会加上一些限制因素，比如一些长度的限制和直线的限制</li>
-<li>设置一些缓存区去处理过度点问题</li>
-<li>会尝试从全局特征处理</li>
-<li>找到了google开源的cartographer，可能会借鉴相关的方法去改进</li>
-</ul>
+<h2 id="改进尝试："><a href="#改进尝试：" class="headerlink" title="改进尝试："></a>改进尝试：</h2><ol>
+<li>尝试使用距离和角度的关系框定范围。</li>
+<li>在框定范围后通过评估函数计算拟合程度。</li>
+<li>查询机械学习的相关算法。</li>
+</ol>
+<p>单线激光雷达扫描的距离和角度之间有如下关系。</p>
+<p><img src="/2021/11/24/%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90%E5%8F%8A%E7%AE%97%E6%B3%95%E8%AE%BE%E8%AE%A1%EF%BC%881%EF%BC%89/IMG_07B82268B225-1.jpeg" style="zoom:67%;"></p>
+<script type="math/tex; mode=display">
+tan(\frac{\theta}{2})=\frac{s}{2d}</script><p>可以得到<mjx-container class="MathJax" jax="SVG"><svg style="vertical-align: -0.023ex" xmlns="http://www.w3.org/2000/svg" width="1.061ex" height="1.618ex" role="img" focusable="false" viewbox="0 -705 469 715"><g stroke="currentColor" fill="currentColor" stroke-width="0" transform="scale(1,-1)"><g data-mml-node="math"><g data-mml-node="mi"><path data-c="1D703" d="M35 200Q35 302 74 415T180 610T319 704Q320 704 327 704T339 705Q393 701 423 656Q462 596 462 495Q462 380 417 261T302 66T168 -10H161Q125 -10 99 10T60 63T41 130T35 200ZM383 566Q383 668 330 668Q294 668 260 623T204 521T170 421T157 371Q206 370 254 370L351 371Q352 372 359 404T375 484T383 566ZM113 132Q113 26 166 26Q181 26 198 36T239 74T287 161T335 307L340 324H145Q145 321 136 286T120 208T113 132Z"/></g></g></g></svg></mjx-container>的值：</p>
+<script type="math/tex; mode=display">
+\theta=2\times \arctan(\frac{s}{2d})</script><p>由于雷达每度扫描一个点，所以算出的角度即为估计的扫描点的数目。可以利用cpp的<code>atan()</code>函数获得。</p>
+<p>每次根据扫描的第一个点，估算出整体有多少个点，然后分成5份，分别计算平均距离、平均强度。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">read a point p</span><br><span class="line">range &lt;- get_range(p.dist)</span><br><span class="line">list &lt;- []</span><br><span class="line">for point p in range:</span><br><span class="line">	list.add(p)</span><br><span class="line">value &lt;- eval(list)</span><br><span class="line">if value &gt; threshold:</span><br><span class="line">	return true</span><br><span class="line">else:</span><br><span class="line">	return false</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">function eval(list):</span><br><span class="line">	divide_list &lt;- uniformly divide list into 5 parts</span><br><span class="line">	for sublist in divide_list:</span><br><span class="line">		dis_avg &lt;- average(distance), stg_avg &lt;- average(strength)</span><br><span class="line">	return e1 * dis_avg + e2 * stg_avg</span><br></pre></td></tr></table></figure>
+<p>具体参数需要进一步测试得出。</p>
 
     </div>
 
@@ -336,7 +352,7 @@ mjx-container[display="true"] + br {
 
       <footer class="post-footer">
           <div class="post-tags">
-              <a href="/tags/%E4%BB%A3%E7%A0%81/" rel="tag"># 代码</a>
+              <a href="/tags/%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90-%E7%AE%97%E6%B3%95/" rel="tag"># 数据分析 算法</a>
           </div>
 
         
@@ -344,11 +360,11 @@ mjx-container[display="true"] + br {
 
         
     <div class="post-nav">
-      <div class="post-nav-item"></div>
       <div class="post-nav-item">
-    <a href="/2021/11/18/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%95%B0%E6%8D%AE%E9%87%87%E9%9B%86%E7%BB%93%E6%9E%9C/" rel="next" title="第一次数据采集结果">
-      第一次数据采集结果 <i class="fa fa-chevron-right"></i>
+    <a href="/2021/11/18/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%95%B0%E6%8D%AE%E9%87%87%E9%9B%86%E7%BB%93%E6%9E%9C/" rel="prev" title="第一次数据采集结果">
+      <i class="fa fa-chevron-left"></i> 第一次数据采集结果
     </a></div>
+      <div class="post-nav-item"></div>
     </div>
       </footer>
     
@@ -407,7 +423,7 @@ mjx-container[display="true"] + br {
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%B7%B2%E7%BB%8F%E5%8F%AF%E4%BB%A5%E5%88%9D%E6%AD%A5%E8%AF%86%E5%88%AB%E5%BC%BA-%E5%BC%B1-%E5%BC%BA-%E5%BC%B1-%E5%BC%BA%E7%89%B9%E5%BE%81"><span class="nav-number">1.</span> <span class="nav-text">已经可以初步识别强-弱-强-弱-强特征</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%AF%E4%BB%A5%E8%AF%86%E5%88%AB"><span class="nav-number">1.1.</span> <span class="nav-text">可以识别</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%8E%B0%E5%9C%A8%E5%AD%98%E5%9C%A8%E7%9A%84%E9%97%AE%E9%A2%98"><span class="nav-number">1.2.</span> <span class="nav-text">现在存在的问题:</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%94%B9%E8%BF%9B%E6%96%B9%E5%90%91"><span class="nav-number">1.3.</span> <span class="nav-text">改进方向</span></a></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8A%E4%B8%80%E7%89%88%E6%9C%AC%E7%AE%97%E6%B3%95%E7%BC%BA%E7%82%B9%E5%88%86%E6%9E%90"><span class="nav-number">1.</span> <span class="nav-text">上一版本算法缺点分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%94%B9%E8%BF%9B%E5%B0%9D%E8%AF%95%EF%BC%9A"><span class="nav-number">2.</span> <span class="nav-text">改进尝试：</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 

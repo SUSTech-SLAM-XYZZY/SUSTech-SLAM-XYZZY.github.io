@@ -261,6 +261,101 @@ mjx-container[display="true"] + br {
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://sustech-slam-xyzzy.github.io/2021/11/24/%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90%E5%8F%8A%E7%AE%97%E6%B3%95%E8%AE%BE%E8%AE%A1%EF%BC%881%EF%BC%89/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="谢岳臻,张子越">
+      <meta itemprop="description" content="SUSTech SLAM project blog">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="SUSTech SLAM sweeping robot project">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/11/24/%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90%E5%8F%8A%E7%AE%97%E6%B3%95%E8%AE%BE%E8%AE%A1%EF%BC%881%EF%BC%89/" class="post-title-link" itemprop="url">数据分析及算法设计（1）</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2021-11-24 23:21:19" itemprop="dateCreated datePublished" datetime="2021-11-24T23:21:19+08:00">2021-11-24</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-11-25 01:23:03" itemprop="dateModified" datetime="2021-11-25T01:23:03+08:00">2021-11-25</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>本周是对于之前算法的改进和分析。</p>
+<h2 id="上一版本算法缺点分析"><a href="#上一版本算法缺点分析" class="headerlink" title="上一版本算法缺点分析"></a>上一版本算法缺点分析</h2><p><a href="https://sustech-slam-xyzzy.github.io/2021/11/11/已可以初步识别强-弱-强-弱-强特征/">上一版本代码点这里</a></p>
+<blockquote>
+<p>回顾：尝试使用贪心算法，通过维持一个list来判断状态。</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line">Point &lt;- {dist, angle, flag, syn_quality}</span><br><span class="line">Feature &lt;- {list(points), stages, Mean, last}</span><br><span class="line">board_len</span><br><span class="line">function calc():</span><br><span class="line">	if size(list(points)) &gt; 360</span><br><span class="line">		clear(list(points)), stage &lt;- 0, Mean &lt;- 0</span><br><span class="line">		return</span><br><span class="line">	pf, pb &lt;- first_point, last point of list(points)</span><br><span class="line">	if distance(pf, pb) &gt; board_len:</span><br><span class="line">		erase the first point in list(points)</span><br><span class="line">		calc()</span><br><span class="line">		return</span><br><span class="line">	if exists p in list(points) has distance(p, pb) &lt; board_len / 5:</span><br><span class="line">		clear(list(points)), stage &lt;- 0, Mean &lt;- 0</span><br><span class="line">		return</span><br><span class="line">	if stage = 0 or stage = 2:</span><br><span class="line">		if mean(syn_quality) &lt; 0.7 * Mean:</span><br><span class="line">			stage &lt;- stage + 1</span><br><span class="line">		else if mean(syn_quality) &gt; 1.3 * Mean:</span><br><span class="line">			stage &lt;- 0</span><br><span class="line">		Mean &lt;- mean(syn_quality)</span><br><span class="line">		return</span><br><span class="line">	if stage = 1 or stage = 3:</span><br><span class="line">		if mean(syn_quality) &gt; 1.3 * Mean:</span><br><span class="line">			stage &lt;- stage + 1</span><br><span class="line">		else if mean(syn_quality) &lt; 0.7 * Mean:</span><br><span class="line">			stage &lt;- 1</span><br><span class="line">		Mean &lt;- mean(syn_quality)</span><br><span class="line">		return</span><br><span class="line">	if stage = 4:</span><br><span class="line">		if check(Feature) failed:</span><br><span class="line">			return</span><br><span class="line">		return Feature</span><br><span class="line">	else:</span><br><span class="line">		Mean &lt;- mean(Mean, syn_quality)</span><br></pre></td></tr></table></figure>
+<p>问题：</p>
+<ul>
+<li><p>对于离群太远的点，无法判断是否保留。尝试了多个宽容度效果都不太好。</p>
+</li>
+<li><p>抗干扰差，部分边界点距离和强度和平均值相差甚远，这部分点贪心算法不能很好的处理。</p>
+<p>  <img src="/2021/11/24/%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90%E5%8F%8A%E7%AE%97%E6%B3%95%E8%AE%BE%E8%AE%A1%EF%BC%881%EF%BC%89/50-90.csv_dist_scatter.jpg" style="zoom: 50%;"><img src="/2021/11/24/%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90%E5%8F%8A%E7%AE%97%E6%B3%95%E8%AE%BE%E8%AE%A1%EF%BC%881%EF%BC%89/60-90-2.csv_strength_bar.jpg" style="zoom: 50%;"></p>
+</li>
+<li><p>强度的宽容度设置没有能很好的反应数据真实情况。</p>
+</li>
+</ul>
+<h2 id="改进尝试："><a href="#改进尝试：" class="headerlink" title="改进尝试："></a>改进尝试：</h2><ol>
+<li>尝试使用距离和角度的关系框定范围。</li>
+<li>在框定范围后通过评估函数计算拟合程度。</li>
+<li>查询机械学习的相关算法。</li>
+</ol>
+<p>单线激光雷达扫描的距离和角度之间有如下关系。</p>
+<p><img src="/2021/11/24/%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90%E5%8F%8A%E7%AE%97%E6%B3%95%E8%AE%BE%E8%AE%A1%EF%BC%881%EF%BC%89/IMG_07B82268B225-1.jpeg" style="zoom:67%;"></p>
+<script type="math/tex; mode=display">
+tan(\frac{\theta}{2})=\frac{s}{2d}</script><p>可以得到<mjx-container class="MathJax" jax="SVG"><svg style="vertical-align: -0.023ex" xmlns="http://www.w3.org/2000/svg" width="1.061ex" height="1.618ex" role="img" focusable="false" viewbox="0 -705 469 715"><g stroke="currentColor" fill="currentColor" stroke-width="0" transform="scale(1,-1)"><g data-mml-node="math"><g data-mml-node="mi"><path data-c="1D703" d="M35 200Q35 302 74 415T180 610T319 704Q320 704 327 704T339 705Q393 701 423 656Q462 596 462 495Q462 380 417 261T302 66T168 -10H161Q125 -10 99 10T60 63T41 130T35 200ZM383 566Q383 668 330 668Q294 668 260 623T204 521T170 421T157 371Q206 370 254 370L351 371Q352 372 359 404T375 484T383 566ZM113 132Q113 26 166 26Q181 26 198 36T239 74T287 161T335 307L340 324H145Q145 321 136 286T120 208T113 132Z"/></g></g></g></svg></mjx-container>的值：</p>
+<script type="math/tex; mode=display">
+\theta=2\times \arctan(\frac{s}{2d})</script><p>由于雷达每度扫描一个点，所以算出的角度即为估计的扫描点的数目。可以利用cpp的<code>atan()</code>函数获得。</p>
+<p>每次根据扫描的第一个点，估算出整体有多少个点，然后分成5份，分别计算平均距离、平均强度。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">read a point p</span><br><span class="line">range &lt;- get_range(p.dist)</span><br><span class="line">list &lt;- []</span><br><span class="line">for point p in range:</span><br><span class="line">	list.add(p)</span><br><span class="line">value &lt;- eval(list)</span><br><span class="line">if value &gt; threshold:</span><br><span class="line">	return true</span><br><span class="line">else:</span><br><span class="line">	return false</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">function eval(list):</span><br><span class="line">	divide_list &lt;- uniformly divide list into 5 parts</span><br><span class="line">	for sublist in divide_list:</span><br><span class="line">		dis_avg &lt;- average(distance), stg_avg &lt;- average(strength)</span><br><span class="line">	return e1 * dis_avg + e2 * stg_avg</span><br></pre></td></tr></table></figure>
+<p>具体参数需要进一步测试得出。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
     <link itemprop="mainEntityOfPage" href="http://sustech-slam-xyzzy.github.io/2021/11/18/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%95%B0%E6%8D%AE%E9%87%87%E9%9B%86%E7%BB%93%E6%9E%9C/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -496,12 +591,12 @@ mjx-container[display="true"] + br {
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">2</span>
+          <span class="site-state-item-count">3</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-tags">
-        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-count">3</span>
         <span class="site-state-item-name">tags</span>
       </div>
   </nav>
