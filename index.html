@@ -266,6 +266,114 @@ mjx-container[display="true"] + br {
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://sustech-slam-xyzzy.github.io/2021/12/07/%E7%AE%97%E6%B3%95%E8%AE%BE%E8%AE%A1%EF%BC%882%EF%BC%89/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="谢岳臻,张子越">
+      <meta itemprop="description" content="SUSTech SLAM project blog">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="SUSTech SLAM sweeping robot project">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/12/07/%E7%AE%97%E6%B3%95%E8%AE%BE%E8%AE%A1%EF%BC%882%EF%BC%89/" class="post-title-link" itemprop="url">算法设计（2）</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2021-12-07 22:16:42" itemprop="dateCreated datePublished" datetime="2021-12-07T22:16:42+08:00">2021-12-07</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-12-09 15:21:25" itemprop="dateModified" datetime="2021-12-09T15:21:25+08:00">2021-12-09</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <blockquote>
+<p>摘要：</p>
+<p>为了实现在点云中寻找充电座的任务，需要抓住每个点<code>距离、角度、强度</code>的关联。本次我们采用了knn和ransac的聚类方法，从距离、强度两个维度上提取了点云中的直线，并将聚类结果可视化，尝试分析其效果。</p>
+</blockquote>
+<h2 id="1-聚类的目标"><a href="#1-聚类的目标" class="headerlink" title="1. 聚类的目标"></a>1. 聚类的目标</h2><p>在原始点云中寻找目标非常的耗时，并且也比较难去设定一个标准去寻找充电座特征。所以对原始数据进行聚类处理。可以将原始无序的点云分成许多cluster再去执行分析。由于充电座的表面是直线，因此可以先寻找直线来排除相当大一部分的数据。</p>
+<p>最好的情况下，充电座应该被完整包含在一个cluster中，这样就可以直接去验证它的强度特征。</p>
+<h2 id="2-聚类的效果分析"><a href="#2-聚类的效果分析" class="headerlink" title="2. 聚类的效果分析"></a>2. 聚类的效果分析</h2><p>上一阶段中我们进行了knn的聚类，在充电座独立摆放时获得了比较不错的结果，大多数情况下程序均可以正确将充电座分到一个cluster中。</p>
+<p>本次进一步考虑了更特殊的情况：</p>
+<ul>
+<li>利用knn聚类的结果包含了大量非直线的物体，比如人腿</li>
+<li>多个物体可能由于距离较近被划分到一个类中</li>
+<li>并且当充电座和墙壁放在一条直线上时，他们将会被分到一组超长的直线中。</li>
+</ul>
+<p>如何进一步对结果进行细化呢？RANdom SAmple Consensus（随机抽样一致）算法可以从包含局外点的一组数据中匹配直线。针对上面提及的1、2点，可以用ransec拟合多条直线，以此区分不同的物体。第3点可以利用滑动窗口的思想解决。</p>
+<p>更进一步的，对于反射强度图而言，其道理和在空间上寻找直线相同，也是在反射空间中寻找若干段直线，并且匹配他们的强度特征。因此，对反射强度的数据也进行了ransac的操作，预先处理点集的数据。</p>
+<p><img src="/2021/12/07/%E7%AE%97%E6%B3%95%E8%AE%BE%E8%AE%A1%EF%BC%882%EF%BC%89/1.png" alt></p>
+<h3 id="1-1-两种聚类的效果可视化"><a href="#1-1-两种聚类的效果可视化" class="headerlink" title="1.1. 两种聚类的效果可视化"></a>1.1. 两种聚类的效果可视化</h3><p>(1) <strong>仅使用knn的聚类示例</strong>    knn聚类图中展示的红圈即为充电桩。不同颜色代表不同的cluster。</p>
+<center> <img style="zoom:80%; border-radius: 0.3125em; box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" src="/2021/12/07/%E7%AE%97%E6%B3%95%E8%AE%BE%E8%AE%A1%EF%BC%882%EF%BC%89/knn聚类结果.jpg"> <br> <div style="color:orange; border-bottom: 1px solid #d9d9d9; display: inline-block; color: #999; padding: 2px;">knn聚类结果</div> </center>
+
+<p>将图片放大可以看到充电桩进一步的细节。图片横纵坐标为现实世界xy坐标系。强度的信息并未在此图中表示。</p>
+<center> <img style="zoom:90%; border-radius: 0.3125em; box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" src="/2021/12/07/%E7%AE%97%E6%B3%95%E8%AE%BE%E8%AE%A1%EF%BC%882%EF%BC%89/knn聚类结果（放大）.jpg"> <br> <div style="color:orange; border-bottom: 1px solid #d9d9d9; display: inline-block; color: #999; padding: 2px;">knn聚类结果（放大）</div> </center>
+
+<p>(2) <strong>使用了ransac的聚类结果</strong>    可以清晰看到图中红色的充电桩。跟上个示例相比，在knn的同一组数据的基础上，ransac还根据其弯曲程度将其分为多个直线。这方便了我们下一步的处理。</p>
+<center> <img style="zoom:80%; border-radius: 0.3125em; box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" src="/2021/12/07/%E7%AE%97%E6%B3%95%E8%AE%BE%E8%AE%A1%EF%BC%882%EF%BC%89/ransac聚类结果.jpg"> <br> <div style="color:orange; border-bottom: 1px solid #d9d9d9; display: inline-block; color: #999; padding: 2px;">ransac聚类结果</div> </center>
+
+
+
+<h2 id="3-算法介绍"><a href="#3-算法介绍" class="headerlink" title="3. 算法介绍"></a>3. 算法介绍</h2><p>首先，将读取的数据（散点）经由ransac分为一系列的直线，然后放到find_Feature里去分析它的宽度和强度特征。</p>
+<h3 id="宽度"><a href="#宽度" class="headerlink" title="宽度"></a>宽度</h3><p>在此处的作用是根据第一条直线的平均距离限定算法搜索的直线数目，避免过多的循环。</p>
+<p>宽度（点的个数、角度的范围）指的是激光雷达打到充电座上的有效点的数目。也就是充电座在激光雷达的视角里有多宽。根据<a href="https://sustech-slam-xyzzy.github.io/2021/11/24/数据分析及算法设计（1）/">数据分析及算法设计（1）</a>的分析，可以利用<mjx-container class="MathJax" jax="SVG"><svg style="vertical-align: -0.797ex" xmlns="http://www.w3.org/2000/svg" width="18.654ex" height="2.493ex" role="img" focusable="false" viewbox="0 -750 8245.2 1102.1"><g stroke="currentColor" fill="currentColor" stroke-width="0" transform="scale(1,-1)"><g data-mml-node="math"><g data-mml-node="mi"><path data-c="1D703" d="M35 200Q35 302 74 415T180 610T319 704Q320 704 327 704T339 705Q393 701 423 656Q462 596 462 495Q462 380 417 261T302 66T168 -10H161Q125 -10 99 10T60 63T41 130T35 200ZM383 566Q383 668 330 668Q294 668 260 623T204 521T170 421T157 371Q206 370 254 370L351 371Q352 372 359 404T375 484T383 566ZM113 132Q113 26 166 26Q181 26 198 36T239 74T287 161T335 307L340 324H145Q145 321 136 286T120 208T113 132Z"/></g><g data-mml-node="mo" transform="translate(746.8,0)"><path data-c="3D" d="M56 347Q56 360 70 367H707Q722 359 722 347Q722 336 708 328L390 327H72Q56 332 56 347ZM56 153Q56 168 72 173H708Q722 163 722 153Q722 140 707 133H70Q56 140 56 153Z"/></g><g data-mml-node="mn" transform="translate(1802.6,0)"><path data-c="32" d="M109 429Q82 429 66 447T50 491Q50 562 103 614T235 666Q326 666 387 610T449 465Q449 422 429 383T381 315T301 241Q265 210 201 149L142 93L218 92Q375 92 385 97Q392 99 409 186V189H449V186Q448 183 436 95T421 3V0H50V19V31Q50 38 56 46T86 81Q115 113 136 137Q145 147 170 174T204 211T233 244T261 278T284 308T305 340T320 369T333 401T340 431T343 464Q343 527 309 573T212 619Q179 619 154 602T119 569T109 550Q109 549 114 549Q132 549 151 535T170 489Q170 464 154 447T109 429Z"/></g><g data-mml-node="mo" transform="translate(2524.8,0)"><path data-c="D7" d="M630 29Q630 9 609 9Q604 9 587 25T493 118L389 222L284 117Q178 13 175 11Q171 9 168 9Q160 9 154 15T147 29Q147 36 161 51T255 146L359 250L255 354Q174 435 161 449T147 471Q147 480 153 485T168 490Q173 490 175 489Q178 487 284 383L389 278L493 382Q570 459 587 475T609 491Q630 491 630 471Q630 464 620 453T522 355L418 250L522 145Q606 61 618 48T630 29Z"/></g><g data-mml-node="mi" transform="translate(3525,0)"><path data-c="61" d="M137 305T115 305T78 320T63 359Q63 394 97 421T218 448Q291 448 336 416T396 340Q401 326 401 309T402 194V124Q402 76 407 58T428 40Q443 40 448 56T453 109V145H493V106Q492 66 490 59Q481 29 455 12T400 -6T353 12T329 54V58L327 55Q325 52 322 49T314 40T302 29T287 17T269 6T247 -2T221 -8T190 -11Q130 -11 82 20T34 107Q34 128 41 147T68 188T116 225T194 253T304 268H318V290Q318 324 312 340Q290 411 215 411Q197 411 181 410T156 406T148 403Q170 388 170 359Q170 334 154 320ZM126 106Q126 75 150 51T209 26Q247 26 276 49T315 109Q317 116 318 175Q318 233 317 233Q309 233 296 232T251 223T193 203T147 166T126 106Z"/><path data-c="72" d="M36 46H50Q89 46 97 60V68Q97 77 97 91T98 122T98 161T98 203Q98 234 98 269T98 328L97 351Q94 370 83 376T38 385H20V408Q20 431 22 431L32 432Q42 433 60 434T96 436Q112 437 131 438T160 441T171 442H174V373Q213 441 271 441H277Q322 441 343 419T364 373Q364 352 351 337T313 322Q288 322 276 338T263 372Q263 381 265 388T270 400T273 405Q271 407 250 401Q234 393 226 386Q179 341 179 207V154Q179 141 179 127T179 101T180 81T180 66V61Q181 59 183 57T188 54T193 51T200 49T207 48T216 47T225 47T235 46T245 46H276V0H267Q249 3 140 3Q37 3 28 0H20V46H36Z" transform="translate(500,0)"/><path data-c="63" d="M370 305T349 305T313 320T297 358Q297 381 312 396Q317 401 317 402T307 404Q281 408 258 408Q209 408 178 376Q131 329 131 219Q131 137 162 90Q203 29 272 29Q313 29 338 55T374 117Q376 125 379 127T395 129H409Q415 123 415 120Q415 116 411 104T395 71T366 33T318 2T249 -11Q163 -11 99 53T34 214Q34 318 99 383T250 448T370 421T404 357Q404 334 387 320Z" transform="translate(892,0)"/><path data-c="74" d="M27 422Q80 426 109 478T141 600V615H181V431H316V385H181V241Q182 116 182 100T189 68Q203 29 238 29Q282 29 292 100Q293 108 293 146V181H333V146V134Q333 57 291 17Q264 -10 221 -10Q187 -10 162 2T124 33T105 68T98 100Q97 107 97 248V385H18V422H27Z" transform="translate(1336,0)"/><path data-c="61" d="M137 305T115 305T78 320T63 359Q63 394 97 421T218 448Q291 448 336 416T396 340Q401 326 401 309T402 194V124Q402 76 407 58T428 40Q443 40 448 56T453 109V145H493V106Q492 66 490 59Q481 29 455 12T400 -6T353 12T329 54V58L327 55Q325 52 322 49T314 40T302 29T287 17T269 6T247 -2T221 -8T190 -11Q130 -11 82 20T34 107Q34 128 41 147T68 188T116 225T194 253T304 268H318V290Q318 324 312 340Q290 411 215 411Q197 411 181 410T156 406T148 403Q170 388 170 359Q170 334 154 320ZM126 106Q126 75 150 51T209 26Q247 26 276 49T315 109Q317 116 318 175Q318 233 317 233Q309 233 296 232T251 223T193 203T147 166T126 106Z" transform="translate(1725,0)"/><path data-c="6E" d="M41 46H55Q94 46 102 60V68Q102 77 102 91T102 122T103 161T103 203Q103 234 103 269T102 328V351Q99 370 88 376T43 385H25V408Q25 431 27 431L37 432Q47 433 65 434T102 436Q119 437 138 438T167 441T178 442H181V402Q181 364 182 364T187 369T199 384T218 402T247 421T285 437Q305 442 336 442Q450 438 463 329Q464 322 464 190V104Q464 66 466 59T477 49Q498 46 526 46H542V0H534L510 1Q487 2 460 2T422 3Q319 3 310 0H302V46H318Q379 46 379 62Q380 64 380 200Q379 335 378 343Q372 371 358 385T334 402T308 404Q263 404 229 370Q202 343 195 315T187 232V168V108Q187 78 188 68T191 55T200 49Q221 46 249 46H265V0H257L234 1Q210 2 183 2T145 3Q42 3 33 0H25V46H41Z" transform="translate(2225,0)"/></g><g data-mml-node="mo" transform="translate(6306,0)"><path data-c="2061" d=""/></g><g data-mml-node="mo" transform="translate(6306,0)"><path data-c="28" d="M94 250Q94 319 104 381T127 488T164 576T202 643T244 695T277 729T302 750H315H319Q333 750 333 741Q333 738 316 720T275 667T226 581T184 443T167 250T184 58T225 -81T274 -167T316 -220T333 -241Q333 -250 318 -250H315H302L274 -226Q180 -141 137 -14T94 250Z"/></g><g data-mml-node="mfrac" transform="translate(6695,0)"><g data-mml-node="mi" transform="translate(414.8,394) scale(0.707)"><path data-c="1D460" d="M131 289Q131 321 147 354T203 415T300 442Q362 442 390 415T419 355Q419 323 402 308T364 292Q351 292 340 300T328 326Q328 342 337 354T354 372T367 378Q368 378 368 379Q368 382 361 388T336 399T297 405Q249 405 227 379T204 326Q204 301 223 291T278 274T330 259Q396 230 396 163Q396 135 385 107T352 51T289 7T195 -10Q118 -10 86 19T53 87Q53 126 74 143T118 160Q133 160 146 151T160 120Q160 94 142 76T111 58Q109 57 108 57T107 55Q108 52 115 47T146 34T201 27Q237 27 263 38T301 66T318 97T323 122Q323 150 302 164T254 181T195 196T148 231Q131 256 131 289Z"/></g><g data-mml-node="mrow" transform="translate(220,-345) scale(0.707)"><g data-mml-node="mn"><path data-c="32" d="M109 429Q82 429 66 447T50 491Q50 562 103 614T235 666Q326 666 387 610T449 465Q449 422 429 383T381 315T301 241Q265 210 201 149L142 93L218 92Q375 92 385 97Q392 99 409 186V189H449V186Q448 183 436 95T421 3V0H50V19V31Q50 38 56 46T86 81Q115 113 136 137Q145 147 170 174T204 211T233 244T261 278T284 308T305 340T320 369T333 401T340 431T343 464Q343 527 309 573T212 619Q179 619 154 602T119 569T109 550Q109 549 114 549Q132 549 151 535T170 489Q170 464 154 447T109 429Z"/></g><g data-mml-node="mi" transform="translate(500,0)"><path data-c="1D451" d="M366 683Q367 683 438 688T511 694Q523 694 523 686Q523 679 450 384T375 83T374 68Q374 26 402 26Q411 27 422 35Q443 55 463 131Q469 151 473 152Q475 153 483 153H487H491Q506 153 506 145Q506 140 503 129Q490 79 473 48T445 8T417 -8Q409 -10 393 -10Q359 -10 336 5T306 36L300 51Q299 52 296 50Q294 48 292 46Q233 -10 172 -10Q117 -10 75 30T33 157Q33 205 53 255T101 341Q148 398 195 420T280 442Q336 442 364 400Q369 394 369 396Q370 400 396 505T424 616Q424 629 417 632T378 637H357Q351 643 351 645T353 664Q358 683 366 683ZM352 326Q329 405 277 405Q242 405 210 374T160 293Q131 214 119 129Q119 126 119 118T118 106Q118 61 136 44T179 26Q233 26 290 98L298 109L352 326Z"/></g></g><rect width="921.2" height="60" x="120" y="220"/></g><g data-mml-node="mo" transform="translate(7856.2,0)"><path data-c="29" d="M60 749L64 750Q69 750 74 750H86L114 726Q208 641 251 514T294 250Q294 182 284 119T261 12T224 -76T186 -143T145 -194T113 -227T90 -246Q87 -249 86 -250H74Q66 -250 63 -250T58 -247T55 -238Q56 -237 66 -225Q221 -64 221 250T66 725Q56 737 55 738Q55 746 60 749Z"/></g></g></g></svg></mjx-container>的公式来进行换算。</p>
+<h3 id="强度"><a href="#强度" class="headerlink" title="强度"></a>强度</h3><p>在此处的作用是根据点的反射强度来寻找“强-弱-强-弱-强”的特征。</p>
+<p>首先算出该组数据中所有的直线点集的平均强度，保存在数组中。然后使用滑动窗口，对每一个直线进行两次for循环，寻找之后的两个波峰。</p>
+<p><code>calc_knn()</code></p>
+<p>读入：无序的散点 <code>points</code></p>
+<p>输出：knn的聚类结果 <code>cluster</code></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">cluster &lt;- {}</span><br><span class="line">kdtree &lt;- kdtree(points)</span><br><span class="line">radius &lt;- 10</span><br><span class="line">for p in points:</span><br><span class="line">	cluster &lt;- </span><br><span class="line">		kdtree.radiusSearch(searchPoint, radius)</span><br></pre></td></tr></table></figure>
+<p><code>straightLine()</code></p>
+<p>读入：knn聚类结果 <code>points</code></p>
+<p>输出：ransac结果 <code>cluster</code></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">cluster &lt;- {}</span><br><span class="line">points &lt;- convert points to xy coordinates</span><br><span class="line">model_line &lt;- sac(points)</span><br><span class="line">ransac &lt;- ransac(model_line)</span><br><span class="line">		  DistanceTreshold(10),</span><br><span class="line">		  MaxIteration(1000)</span><br><span class="line">ransac.computeModel()</span><br></pre></td></tr></table></figure>
+<p><code>find_Features()</code></p>
+<p>读入：一系列聚类后的cluster。</p>
+<p>输出：符合特征的充电座的聚类。</p>
+ <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">cluster_syn &lt;- kdTree.searchRadius(cluster)</span><br><span class="line">lines &lt;- ransac(cluster_syn)</span><br><span class="line">rusult &lt;- []</span><br><span class="line">for line in lines:</span><br><span class="line">    for i in [1, len(line)]:</span><br><span class="line">        l1 &lt;- line[i]</span><br><span class="line">        len_max &lt;- len(l1) * 5</span><br><span class="line">        if length from beg(l1) to end(line) &gt; len_max:</span><br><span class="line">        	fur_line &lt;- furthest line beg(fur_line) &lt; beg(l1) + len_max</span><br><span class="line">            for j in [1, idx(fur_line)]:</span><br><span class="line">                for k in [j+1, idx(fur_line)]:</span><br><span class="line">                    l2, l3 &lt;- l[j], l[k]</span><br><span class="line">                    if check(l1, l2, l3):</span><br><span class="line">                    	result.add(lines[l1 to l3])</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
     <link itemprop="mainEntityOfPage" href="http://sustech-slam-xyzzy.github.io/2021/11/24/%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90%E5%8F%8A%E7%AE%97%E6%B3%95%E8%AE%BE%E8%AE%A1%EF%BC%881%EF%BC%89/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -596,7 +704,7 @@ tan(\frac{\theta}{2})=\frac{s}{2d}</script><p>可以得到<mjx-container class="
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">3</span>
+          <span class="site-state-item-count">4</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
